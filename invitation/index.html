@@ -8,7 +8,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="마흔, 우리 다시 모이자">
 <meta property="og:description" content="초대합니다">
-<meta property="og:image" content="https://kyubaek-yoon.github.io/40th-Friends/invitation/img/cover.jpg">
+<meta property="og:image" content="https://kyubaek-yoon.github.io/40th-Gathering/invitation/img/cover.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -82,6 +82,24 @@
     background:var(--ink);color:#fff;padding:8px 16px;border-radius:6px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none}
   .toast.show{opacity:1}
 
+
+  /* 사진 갤러리 */
+  .gallery{margin:0 0 48px}
+  .track{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;margin:0 -24px;padding:4px 24px 8px;scroll-padding:0 24px}
+  .track::-webkit-scrollbar{display:none}
+  .shot{flex:0 0 86%;scroll-snap-align:center;margin:0;background:#fff;padding:10px 10px 12px;
+    border:1px solid #e4e6df;border-radius:3px;box-shadow:0 2px 8px rgba(36,48,42,.08)}
+  .shot img{display:block;width:100%;aspect-ratio:4/5;object-fit:contain;background:#eef0ea;image-orientation:from-image}
+  .gnav{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+  .count{font-family:"Nanum Pen Script",cursive;font-size:26px;color:var(--ink-soft)}
+  .arrows{display:flex;gap:8px}
+  .arrows button{width:40px;height:40px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font-size:18px;line-height:1}
+  .arrows button:disabled{opacity:.3;cursor:default}
+  .arrows button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+  .hint{font-size:15px;color:var(--ink-soft);margin:0 0 12px}
+  @media (min-width:700px){.shot{flex-basis:62%}}
+
   @media (max-width:600px){
     .board{border-width:10px;border-bottom-width:0;padding:20px 18px 0}
     .board-inner{grid-template-columns:1fr;gap:4px;min-height:0}
@@ -112,6 +130,16 @@
 
 <main>
   <section class="letter" id="letter"></section>
+
+  <section class="gallery" aria-label="사진">
+    <h2>그때 그 시절</h2>
+    <p class="hint">옆으로 넘겨 보세요</p>
+    <div class="track" id="track" tabindex="0"></div>
+    <div class="gnav">
+      <span class="count" id="count" aria-live="polite"></span>
+      <div class="arrows"><button type="button" id="prev" aria-label="이전 사진">‹</button><button type="button" id="next" aria-label="다음 사진">›</button></div>
+    </div>
+  </section>
 
   <h2>언제, 어디서</h2>
   <dl>
@@ -154,6 +182,36 @@ const CONFIG = {
   fee: "○만 원",
   account: "○○은행 000-0000-0000",
   holder: "예금주 ○○○",
+  photos: [                           // img 폴더 사진 파일 이름, 넘기는 순서대로
+    "20220408_034901.jpeg",
+    "20220408_051051.jpeg",
+    "20220218_013410.png",
+    "20220218_012216.jpeg",
+    "20220218_012940.png",
+    "20220217_110038.png",
+    "20210826_084035.jpg",
+    "20210731_093600.jpeg",
+    "20210429_110030.jpg",
+    "20210421_105710.jpg",
+    "20201011_022821.jpg",
+    "20200712_032852.jpeg",
+    "20200606_052736.jpg",
+    "20200523_050544 (4).jpeg",
+    "20200523_050544 (3).jpeg",
+    "20200523_050544 (2).jpeg",
+    "20200523_050544 (1).jpeg",
+    "20200523_050544.jpeg",
+    "20200517_103543.jpg",
+    "20200411_082450.jpg",
+    "20200303_105337.jpg",
+    "20190120_040606.jpg",
+    "20180121_101108 (1).jpeg",
+    "20180121_101108.jpeg",
+    "P20170925_131058124_122A3940-78F6-4509-9E3B-B10EFB9BD136.JPG",
+    "P20151116_201119000_7B1F3576-7F02-40E1-929C-1C3272640596.JPG",
+    "P20151116_201015000_1C71088C-2FC0-4696-BA62-5D1CF8CCEE13.JPG",
+    "P20150830_010323875_AE4E0970-D57C-473A-B743-B19F63E0E253.JPG",
+  ],
   rsvpUrl: "",                         // 구글 폼 링크
   contact: "문의 윤규백 010-0000-0000"
 };
@@ -175,6 +233,26 @@ if (CONFIG.showFee) {
 } else $("feeBlock").remove();
 if (CONFIG.rsvpUrl) $("rsvp").href = CONFIG.rsvpUrl; else { $("rsvp").previousElementSibling.remove(); $("rsvp").remove(); }
 $("contact").textContent = CONFIG.contact;
+
+// 사진 갤러리
+const track=$("track"), shots=[];
+CONFIG.photos.forEach((name,k)=>{ const i=k+1;
+  const f=document.createElement("figure"); f.className="shot";
+  const im=document.createElement("img"); im.src="img/"+encodeURIComponent(name); im.alt=`사진 ${i}`; if(i>2) im.loading="lazy";
+  im.onerror=()=>{ f.remove(); const j=shots.indexOf(f); if(j>-1) shots.splice(j,1); cur=Math.min(cur,shots.length-1); update(); };
+  f.appendChild(im); track.appendChild(f); shots.push(f);
+});
+let cur=0;
+function update(){ $("count").textContent=`${cur+1} / ${shots.length}`; $("prev").disabled=cur===0; $("next").disabled=cur===shots.length-1; }
+track.addEventListener("scroll",()=>{
+  const mid=track.scrollLeft+track.clientWidth/2; let best=0,bd=1e9;
+  shots.forEach((el,i)=>{const c=el.offsetLeft+el.offsetWidth/2-track.offsetLeft; const d=Math.abs(c-mid); if(d<bd){bd=d;best=i;}});
+  if(best!==cur){cur=best;update();}
+},{passive:true});
+function go(i){ i=Math.max(0,Math.min(shots.length-1,i)); shots[i].scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}); cur=i; update(); }
+$("prev").onclick=()=>go(cur-1); $("next").onclick=()=>go(cur+1);
+track.addEventListener("keydown",e=>{ if(e.key==="ArrowRight"){e.preventDefault();go(cur+1);} if(e.key==="ArrowLeft"){e.preventDefault();go(cur-1);} });
+update();
 
 function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1600); }
 const copyBtn = $("copyBtn");
